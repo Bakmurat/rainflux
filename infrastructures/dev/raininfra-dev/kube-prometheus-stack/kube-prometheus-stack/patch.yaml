@@ -6,6 +6,10 @@ spec:
   values:
     grafana:
       adminPassword: admin
+      persistence:
+        enabled: true
+        storageClassName: gp2
+        size: 10Gi
       ingress:
         enabled: true
         ingressClassName: nginx
@@ -23,7 +27,7 @@ spec:
         storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: gp3
+              storageClassName: gp2
               accessModes:
                 - ReadWriteOnce
               resources:
@@ -34,7 +38,7 @@ spec:
         storage:
           volumeClaimTemplate:
             spec:
-              storageClassName: gp3
+              storageClassName: gp2
               accessModes:
                 - ReadWriteOnce
               resources:
