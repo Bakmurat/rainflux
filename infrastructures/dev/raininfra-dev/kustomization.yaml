@@ -1,6 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - 000-cluster-wide-resources
+  - flux-system
+  - cert-manager
   - ingress-nginx
   - kube-prometheus-stack
   - rancher
