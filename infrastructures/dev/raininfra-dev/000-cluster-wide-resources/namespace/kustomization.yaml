@@ -5,3 +5,4 @@ resources:
   - ingress-nginx.yaml
   - monitoring.yaml
   - cattle-system.yaml
+  - external-dns.yaml
