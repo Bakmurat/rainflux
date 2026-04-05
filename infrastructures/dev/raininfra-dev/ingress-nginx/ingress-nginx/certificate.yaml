@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bolunas-com-cert
+  namespace: ingress-nginx
+spec:
+  commonName: "*.bolunas.com"
+  dnsNames:
+    - "*.bolunas.com"
+    - "bolunas.com"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-dns-issuer
+  secretName: bolunas-com-tls

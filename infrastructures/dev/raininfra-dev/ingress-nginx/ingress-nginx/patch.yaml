@@ -1,0 +1,15 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ingress-nginx
+spec:
+  values:
+    controller:
+      ingressClass: nginx
+      service:
+        type: LoadBalancer
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-type: nlb
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      extraArgs:
+        default-ssl-certificate: "ingress-nginx/bolunas-com-tls"

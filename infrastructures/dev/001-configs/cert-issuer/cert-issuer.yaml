@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns-issuer
+spec:
+  acme:
+    email: bakmuratkubanaliev@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-dns-private-key
+    solvers:
+      - dns01:
+          route53:
+            region: us-east-1
+            # IRSA is used — no explicit credentials needed
+            # The cert-manager ServiceAccount is annotated with the IAM role ARN
+            hostedZoneID: Z090079129ECFRBJCAF48

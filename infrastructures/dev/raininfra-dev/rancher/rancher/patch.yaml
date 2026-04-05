@@ -1,0 +1,15 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rancher
+spec:
+  values:
+    hostname: rancher-dev.bolunas.com
+    tls: ingress
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      tls:
+        source: secret
+        secretName: bolunas-com-tls
+    replicas: 1
