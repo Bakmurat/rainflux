@@ -7,9 +7,10 @@ spec:
     controller:
       ingressClass: nginx
       service:
-        type: LoadBalancer
-        annotations:
-          service.beta.kubernetes.io/aws-load-balancer-type: nlb
-          service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+        # TODO: Switch back to LoadBalancer once AWS enables ELB for this account
+        type: NodePort
+        nodePorts:
+          http: 30080
+          https: 30443
       extraArgs:
         default-ssl-certificate: "ingress-nginx/bolunas-com-tls"

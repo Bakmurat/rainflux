@@ -4,6 +4,7 @@ metadata:
   name: cert-manager
 spec:
   values:
+    fullnameOverride: cert-manager
     crds:
       enabled: true
     serviceAccount:
