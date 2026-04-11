@@ -1,0 +1,47 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: elasticsearch
+  namespace: flux-system
+spec:
+  interval: 20h0m0s
+  chart:
+    spec:
+      chart: elasticsearch
+      version: 8.5.1
+      sourceRef:
+        kind: HelmRepository
+        name: elastic
+        namespace: flux-system
+  install:
+    createNamespace: true
+  targetNamespace: logging
+  values:
+    clusterName: elasticsearch
+    replicas: 1
+    minimumMasterNodes: 1
+    # Disable xpack security for dev simplicity — do NOT do this in prod.
+    createCert: false
+    protocol: http
+    esConfig:
+      elasticsearch.yml: |
+        xpack.security.enabled: false
+        xpack.security.transport.ssl.enabled: false
+        xpack.security.http.ssl.enabled: false
+    # Single-node layout so the bootstrap check doesn't wait for peers.
+    clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+    # Resource footprint tuned for a small dev cluster.
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    esJavaOpts: "-Xmx1g -Xms1g"
+    volumeClaimTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 30Gi

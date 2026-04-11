@@ -8,3 +8,6 @@ resources:
   - kube-prometheus-stack
   - rancher
   - external-dns
+  - elasticsearch
+  - kibana
+  - fluentd

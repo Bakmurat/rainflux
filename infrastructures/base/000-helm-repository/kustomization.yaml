@@ -6,3 +6,5 @@ resources:
   - ingress-nginx.yaml
   - prometheus-community.yaml
   - rancher.yaml
+  - elastic.yaml
+  - fluent.yaml
