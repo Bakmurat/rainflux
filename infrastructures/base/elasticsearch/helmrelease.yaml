@@ -20,18 +20,13 @@ spec:
     clusterName: elasticsearch
     replicas: 1
     minimumMasterNodes: 1
-    # Password auth ON so Kibana's pre-install hook can create a service
-    # account token.  TLS OFF — dev cluster, no wire encryption needed.
-    createCert: false
-    protocol: http
+    # Use chart defaults: createCert=true, protocol=https, security enabled.
+    # The chart generates a self-signed CA + cert, creates the
+    # elasticsearch-master-credentials and elasticsearch-master-certs secrets,
+    # and wires TLS into the ES keystore automatically.
     secret:
       enabled: true
       password: "changeme"
-    esConfig:
-      elasticsearch.yml: |
-        xpack.security.enabled: true
-        xpack.security.transport.ssl.enabled: false
-        xpack.security.http.ssl.enabled: false
     clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
     resources:
       requests:

@@ -19,8 +19,7 @@ spec:
   dependsOn:
     - name: elasticsearch
   values:
-    elasticsearchHosts: "http://elasticsearch-master:9200"
-    protocol: http
+    elasticsearchHosts: "https://elasticsearch-master:9200"
     resources:
       requests:
         cpu: 100m
