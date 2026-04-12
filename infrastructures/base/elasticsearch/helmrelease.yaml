@@ -22,7 +22,7 @@ spec:
     minimumMasterNodes: 1
     # Password auth ON so Kibana's pre-install hook can create a service
     # account token.  TLS OFF — dev cluster, no wire encryption needed.
-    createCert: true
+    createCert: false
     protocol: http
     secret:
       enabled: true
