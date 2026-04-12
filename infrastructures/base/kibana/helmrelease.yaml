@@ -16,16 +16,15 @@ spec:
   install:
     createNamespace: true
   targetNamespace: logging
-  # Kibana can't start until Elasticsearch is reachable; let helm-controller
-  # install ES first so Kibana doesn't waste retries.
   dependsOn:
     - name: elasticsearch
   values:
     elasticsearchHosts: "http://elasticsearch-master:9200"
+    protocol: http
     resources:
       requests:
         cpu: 100m
         memory: 512Mi
       limits:
-        cpu: 500m
+        cpu: 1000m
         memory: 1Gi

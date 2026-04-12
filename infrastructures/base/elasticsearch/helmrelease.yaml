@@ -20,17 +20,19 @@ spec:
     clusterName: elasticsearch
     replicas: 1
     minimumMasterNodes: 1
-    # Disable xpack security for dev simplicity — do NOT do this in prod.
-    createCert: false
+    # Password auth ON so Kibana's pre-install hook can create a service
+    # account token.  TLS OFF — dev cluster, no wire encryption needed.
+    createCert: true
     protocol: http
+    secret:
+      enabled: true
+      password: "changeme"
     esConfig:
       elasticsearch.yml: |
-        xpack.security.enabled: false
+        xpack.security.enabled: true
         xpack.security.transport.ssl.enabled: false
         xpack.security.http.ssl.enabled: false
-    # Single-node layout so the bootstrap check doesn't wait for peers.
     clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
-    # Resource footprint tuned for a small dev cluster.
     resources:
       requests:
         cpu: 500m
