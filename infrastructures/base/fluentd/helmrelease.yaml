@@ -4,7 +4,6 @@ metadata:
   name: fluentd
   namespace: flux-system
 spec:
-  interval: 20h0m0s
   chart:
     spec:
       chart: fluentd
@@ -13,141 +12,149 @@ spec:
         kind: HelmRepository
         name: fluent
         namespace: flux-system
+  interval: 20h0m0s
   install:
     createNamespace: true
   targetNamespace: logging
   dependsOn:
     - name: elasticsearch
   values:
-    # DaemonSet: one fluentd pod per node, tailing /var/log/containers.
-    kind: DaemonSet
-    # The chart's default image (fluent/fluentd base) does NOT ship the
-    # elasticsearch output plugin. The kubernetes-daemonset image does, so
-    # we override the image just for the plugins — not for its baked-in
-    # config, which is shadowed by the chart's ConfigMap mount at /fluentd/etc.
+    kind: "DaemonSet"
+    variant: elasticsearch7
+
     image:
       repository: fluent/fluentd-kubernetes-daemonset
-      tag: v1.17.1-debian-elasticsearch8-1.0
-    # Tolerate all taints so we collect from control-plane nodes too.
-    tolerations:
-      - operator: Exists
-    # Mount host paths for container logs.
-    mounts:
-      logLocations:
-        - /var/log
-        - /var/lib/docker/containers
+      pullPolicy: IfNotPresent
+
+    serviceAccount:
+      create: true
+
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
+        cpu: 150m
+        memory: 300Mi
       limits:
-        cpu: 500m
-        memory: 512Mi
-    # The chart also creates a Service by default; we don't need it.
-    service:
+        cpu: 300m
+        memory: 600Mi
+
+    rbac:
+      create: true
+
+    podSecurityContext:
+      enabled: true
+      fsGroup: 0
+      runAsUser: 0
+      runAsGroup: 0
+
+    securityContext:
+      privileged: true
+      capabilities:
+        add: ["SYS_ADMIN"]
+
+    persistence:
       enabled: false
 
-    ## Fluentd pipeline:
-    ##   sources  → @KUBERNETES label → kube_metadata filter →
-    ##   @DISPATCH label → prometheus metrics → @OUTPUT label → elasticsearch
-    fileConfigs:
-      01_sources.conf: |-
-        ## logs from containerd/CRI
-        <source>
-          @type tail
-          @id in_tail_container_logs
-          @label @KUBERNETES
-          path /var/log/containers/*.log
-          pos_file /var/log/fluentd-containers.log.pos
-          tag kubernetes.*
-          read_from_head true
-          <parse>
-            @type multi_format
-            <pattern>
-              format json
-              time_key time
-              time_type string
-              time_format "%Y-%m-%dT%H:%M:%S.%NZ"
-              keep_time_key false
-            </pattern>
-            <pattern>
-              format regexp
-              expression /^(?<time>.+) (?<stream>stdout|stderr)( (.))? (?<log>.*)$/
-              time_format '%Y-%m-%dT%H:%M:%S.%NZ'
-              keep_time_key false
-            </pattern>
-          </parse>
-          emit_unmatched_lines true
-        </source>
+    livenessProbe:
+      httpGet:
+        path: /metrics
+        port: metrics
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
 
-        # expose metrics in prometheus format
+    readinessProbe:
+      httpGet:
+        path: /metrics
+        port: metrics
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+    tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+
+    service:
+      enabled: true
+      type: "ClusterIP"
+      ports:
+        - name: "forward"
+          protocol: TCP
+          containerPort: 24224
+
+    metrics:
+      serviceMonitor:
+        enabled: false
+
+    volumeMounts:
+      - name: posfile-storage
+        mountPath: /fluentd/log
+
+    volumes:
+      - name: posfile-storage
+        emptyDir: {}
+
+    fileConfigs:
+      00_monitor.conf: |
         <source>
           @type prometheus
           bind 0.0.0.0
           port 24231
-          metrics_path /metrics
         </source>
 
-      02_filters.conf: |-
-        <label @KUBERNETES>
-          <match kubernetes.var.log.containers.fluentd**>
-            @type relabel
-            @label @FLUENT_LOG
-          </match>
+      01_sources.conf: |
+        <source>
+          @type tail
+          @id in_tail_container_logs
+          path /var/log/containers/*.log
+          pos_file /fluentd/log/containers.pos
+          tag kubernetes.*
+          read_from_head true
+          rotate_wait 5
+          <parse>
+            @type cri
+          </parse>
+        </source>
 
-          # <match kubernetes.var.log.containers.**_kube-system_**>
-          #   @type null
-          #   @id ignore_kube_system_logs
-          # </match>
+      02_filters.conf: |
+        <filter kubernetes.**>
+          @type kubernetes_metadata
+          @id filter_kube_metadata
+          skip_labels false
+          skip_container_metadata false
+          skip_namespace_metadata true
+          skip_master_url true
+        </filter>
 
-          <filter kubernetes.**>
-            @type kubernetes_metadata
-            @id filter_kube_metadata
-            skip_labels false
-            skip_container_metadata false
-            skip_namespace_metadata true
-            skip_master_url true
-          </filter>
+      03_outputs.conf: |
+        <match kubernetes.**>
+          @type elasticsearch
+          host "elasticsearch-master"
+          port 9200
+          scheme http
+          path ""
+          verify_es_version_at_startup false
+          @log_level info
+          reconnect_on_error true
 
-          <match **>
-            @type relabel
-            @label @DISPATCH
-          </match>
-        </label>
+          logstash_format true
+          logstash_prefix k8s
+          include_tag_key true
+          suppress_type_name true
+          type_name _doc
 
-      03_dispatch.conf: |-
-        <label @DISPATCH>
-          <filter **>
-            @type prometheus
-            <metric>
-              name fluentd_input_status_num_records_total
-              type counter
-              desc The total number of incoming records
-              <labels>
-                tag ${tag}
-                hostname ${hostname}
-              </labels>
-            </metric>
-          </filter>
+          request_timeout 60s
 
-          <match **>
-            @type relabel
-            @label @OUTPUT
-          </match>
-        </label>
-
-      04_outputs.conf: |-
-        <label @OUTPUT>
-          <match **>
-            @type elasticsearch
-            host "elasticsearch-master"
-            port 9200
-            path ""
-            scheme https
-            ssl_verify false
-            user elastic
-            password changeme
-            # Don't wait for elastic to start up.
-            verify_es_version_at_startup false
-          </match>
-        </label>
+          <buffer>
+            flush_interval 5s
+            chunk_limit_size 8m
+            total_limit_size 512m
+            overflow_action drop_oldest_chunk
+          </buffer>
+        </match>

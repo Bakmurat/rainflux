@@ -4,41 +4,78 @@ metadata:
   name: elasticsearch
   namespace: flux-system
 spec:
-  interval: 20h0m0s
   chart:
     spec:
       chart: elasticsearch
-      version: 8.5.1
+      version: 7.17.3
       sourceRef:
         kind: HelmRepository
         name: elastic
         namespace: flux-system
+  interval: 20h0m0s
   install:
     createNamespace: true
   targetNamespace: logging
   values:
-    clusterName: elasticsearch
+    clusterName: "elasticsearch"
+    nodeGroup: "master"
+    roles:
+      master: "true"
+      ingest: "true"
+      data: "true"
+      remote_cluster_client: "true"
+      ml: "true"
+
     replicas: 1
     minimumMasterNodes: 1
-    # Use chart defaults: createCert=true, protocol=https, security enabled.
-    # The chart generates a self-signed CA + cert, creates the
-    # elasticsearch-master-credentials and elasticsearch-master-certs secrets,
-    # and wires TLS into the ES keystore automatically.
-    secret:
-      enabled: true
-      password: "changeme"
-    clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+
+    image: "docker.elastic.co/elasticsearch/elasticsearch"
+    imageTag: "7.17.3"
+    imagePullPolicy: "IfNotPresent"
+
+    esConfig: {}
+
     resources:
       requests:
-        cpu: 500m
-        memory: 1Gi
+        cpu: "500m"
+        memory: "2Gi"
       limits:
-        cpu: 1000m
-        memory: 2Gi
-    esJavaOpts: "-Xmx1g -Xms1g"
+        cpu: "1000m"
+        memory: "2Gi"
+
+    networkHost: "0.0.0.0"
+
     volumeClaimTemplate:
-      accessModes:
-        - ReadWriteOnce
+      accessModes: ["ReadWriteOnce"]
       resources:
         requests:
           storage: 30Gi
+
+    protocol: http
+    httpPort: 9200
+    transportPort: 9300
+
+    service:
+      enabled: true
+      type: ClusterIP
+
+    antiAffinity: "soft"
+
+    podSecurityContext:
+      fsGroup: 1000
+      runAsUser: 1000
+
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+
+    clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+
+    sysctlInitContainer:
+      enabled: true
+
+    persistence:
+      enabled: true
