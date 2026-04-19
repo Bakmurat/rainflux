@@ -1,0 +1,22 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: policy-reporter
+spec:
+  values:
+    ui:
+      enabled: true
+      ingress:
+        enabled: true
+        className: "nginx"
+        annotations:
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        hosts:
+          - host: policy-reporter-dev.bolunas.com
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: bolunas-com-tls
+            hosts:
+              - policy-reporter-dev.bolunas.com

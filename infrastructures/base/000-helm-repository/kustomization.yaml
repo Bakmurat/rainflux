@@ -8,3 +8,5 @@ resources:
   - rancher.yaml
   - elastic.yaml
   - fluent.yaml
+  - kyverno.yaml
+  - policy-reporter.yaml

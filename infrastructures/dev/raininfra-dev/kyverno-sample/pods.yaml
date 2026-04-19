@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pass
+  namespace: kyverno-demo
+  labels:
+    app.kubernetes.io/name: demo-pass
+spec:
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          memory: 32Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-fail
+  namespace: kyverno-demo
+spec:
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          memory: 32Mi

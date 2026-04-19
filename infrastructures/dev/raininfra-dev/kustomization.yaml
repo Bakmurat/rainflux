@@ -11,3 +11,6 @@ resources:
   - elasticsearch
   - kibana
   - fluentd
+  - kyverno
+  - policy-reporter
+  - kyverno-sample

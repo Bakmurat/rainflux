@@ -7,3 +7,5 @@ resources:
   - cattle-system.yaml
   - external-dns.yaml
   - logging.yaml
+  - kyverno.yaml
+  - policy-reporter.yaml

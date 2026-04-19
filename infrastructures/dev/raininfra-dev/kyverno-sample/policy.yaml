@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-app-label
+  annotations:
+    policies.kyverno.io/title: Require app.kubernetes.io/name label
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Pods in the kyverno-demo namespace must have the
+      app.kubernetes.io/name label set.
+spec:
+  background: true
+  rules:
+    - name: check-for-app-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - kyverno-demo
+      validate:
+        failureAction: Enforce
+        message: "The label 'app.kubernetes.io/name' is required."
+        pattern:
+          metadata:
+            labels:
+              app.kubernetes.io/name: "?*"
