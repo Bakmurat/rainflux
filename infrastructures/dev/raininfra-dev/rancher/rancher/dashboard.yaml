@@ -1,0 +1,250 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-rancher
+  namespace: cattle-system
+  labels:
+    grafana_dashboard: "1"
+data:
+  rancher.json: |-
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {"type": "row", "id": 100, "title": "Overview", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "collapsed": false, "panels": []},
+        {
+          "type": "stat", "id": 1, "title": "Rancher Up",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 4, "w": 4, "x": 0, "y": 1},
+          "targets": [{"expr": "sum(up{job=\"cattle-system-rancher\"})", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+          "fieldConfig": {"defaults": {"mappings": [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}, "1": {"text": "UP", "color": "green"}}}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "short"}}
+        },
+        {
+          "type": "stat", "id": 2, "title": "Webhook Ready",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 4, "w": 4, "x": 4, "y": 1},
+          "targets": [{"expr": "sum(kube_deployment_status_replicas_available{namespace=\"cattle-system\", deployment=\"rancher-webhook\"})", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+          "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "short"}}
+        },
+        {
+          "type": "stat", "id": 3, "title": "Restarts (24h)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 4, "w": 4, "x": 8, "y": 1},
+          "targets": [{"expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"cattle-system\"}[24h]))", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"},
+          "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 5}]}, "unit": "short"}}
+        },
+        {
+          "type": "stat", "id": 4, "title": "Goroutines",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 4, "w": 4, "x": 12, "y": 1},
+          "targets": [{"expr": "sum(go_goroutines{job=\"cattle-system-rancher\"})", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area", "textMode": "value"},
+          "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 5000}, {"color": "red", "value": 10000}]}, "unit": "short"}}
+        },
+        {
+          "type": "stat", "id": 5, "title": "Memory (Working Set)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 4, "w": 4, "x": 16, "y": 1},
+          "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=\"cattle-system\", pod=~\"cattle-system-rancher-.*\", container=\"rancher\"})", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area", "textMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "bytes"}}
+        },
+        {
+          "type": "stat", "id": 6, "title": "CPU (cores)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 4, "w": 4, "x": 20, "y": 1},
+          "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"cattle-system\", pod=~\"cattle-system-rancher-.*\", container=\"rancher\"}[5m]))", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area", "textMode": "value"},
+          "fieldConfig": {"defaults": {"unit": "short", "decimals": 3}}
+        },
+
+        {"type": "row", "id": 101, "title": "Pod Resources (cattle-system)", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5}, "collapsed": false, "panels": []},
+        {
+          "type": "timeseries", "id": 10, "title": "CPU by Pod",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+          "targets": [{"expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"cattle-system\", container!=\"\", container!=\"POD\"}[5m]))", "legendFormat": "{{pod}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "short", "custom": {"drawStyle": "line", "fillOpacity": 10, "showPoints": "never"}}}
+        },
+        {
+          "type": "timeseries", "id": 11, "title": "Memory Working Set by Pod",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+          "targets": [{"expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"cattle-system\", container!=\"\", container!=\"POD\"})", "legendFormat": "{{pod}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "bytes", "custom": {"drawStyle": "line", "fillOpacity": 10, "showPoints": "never"}}}
+        },
+        {
+          "type": "timeseries", "id": 12, "title": "Pod Restarts (1h increase)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+          "targets": [{"expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"cattle-system\"}[1h]))", "legendFormat": "{{pod}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "short", "custom": {"drawStyle": "bars", "fillOpacity": 60}}}
+        },
+        {
+          "type": "timeseries", "id": 13, "title": "Network I/O",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+          "targets": [
+            {"expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"cattle-system\"}[5m]))", "legendFormat": "rx {{pod}}", "refId": "A"},
+            {"expr": "-sum by (pod) (rate(container_network_transmit_bytes_total{namespace=\"cattle-system\"}[5m]))", "legendFormat": "tx {{pod}}", "refId": "B"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "Bps", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+
+        {"type": "row", "id": 102, "title": "Go Runtime", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22}, "collapsed": false, "panels": []},
+        {
+          "type": "timeseries", "id": 20, "title": "Goroutines",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 23},
+          "targets": [{"expr": "go_goroutines{job=\"cattle-system-rancher\"}", "legendFormat": "{{pod}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "short", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 21, "title": "Heap Memory",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 23},
+          "targets": [
+            {"expr": "go_memstats_alloc_bytes{job=\"cattle-system-rancher\"}", "legendFormat": "alloc {{pod}}", "refId": "A"},
+            {"expr": "go_memstats_heap_inuse_bytes{job=\"cattle-system-rancher\"}", "legendFormat": "heap inuse {{pod}}", "refId": "B"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "bytes", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 22, "title": "GC Pause (p99 over 5m)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 23},
+          "targets": [{"expr": "histogram_quantile(0.99, sum by (le, pod) (rate(go_gc_duration_seconds_bucket{job=\"cattle-system-rancher\"}[5m])))", "legendFormat": "{{pod}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+
+        {"type": "row", "id": 103, "title": "Rancher Controllers (lasso)", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 31}, "collapsed": false, "panels": []},
+        {
+          "type": "timeseries", "id": 30, "title": "Handler Execution Rate (top 10)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+          "targets": [{"expr": "topk(10, sum by (controller_name) (rate(lasso_controller_total_handler_execution{job=\"cattle-system-rancher\", has_error=\"false\"}[5m])))", "legendFormat": "{{controller_name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "ops", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 31, "title": "Handler Errors (rate by controller)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+          "targets": [{"expr": "topk(10, sum by (controller_name) (rate(lasso_controller_total_handler_execution{job=\"cattle-system-rancher\", has_error=\"true\"}[5m])))", "legendFormat": "{{controller_name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "ops", "custom": {"drawStyle": "line", "fillOpacity": 20}, "color": {"mode": "fixed", "fixedColor": "red"}}}
+        },
+        {
+          "type": "timeseries", "id": 32, "title": "Reconcile Latency p95 (top 10)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
+          "targets": [{"expr": "topk(10, histogram_quantile(0.95, sum by (le, controller_name) (rate(lasso_controller_reconcile_time_seconds_bucket{job=\"cattle-system-rancher\"}[5m]))))", "legendFormat": "{{controller_name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 33, "title": "Cached Objects by Controller (top 10)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
+          "targets": [{"expr": "topk(10, sum by (controller_name) (lasso_controller_total_cached_object{job=\"cattle-system-rancher\"}))", "legendFormat": "{{controller_name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "short", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+
+        {"type": "row", "id": 104, "title": "Workqueue", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 48}, "collapsed": false, "panels": []},
+        {
+          "type": "timeseries", "id": 40, "title": "Queue Depth (top 10)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 49},
+          "targets": [{"expr": "topk(10, workqueue_depth{job=\"cattle-system-rancher\"})", "legendFormat": "{{name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "short", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 41, "title": "Adds Rate (top 10)",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 49},
+          "targets": [{"expr": "topk(10, sum by (name) (rate(workqueue_adds_total{job=\"cattle-system-rancher\"}[5m])))", "legendFormat": "{{name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "ops", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 42, "title": "Queue Wait Latency p95",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 57},
+          "targets": [{"expr": "topk(10, histogram_quantile(0.95, sum by (le, name) (rate(workqueue_queue_duration_seconds_bucket{job=\"cattle-system-rancher\"}[5m]))))", "legendFormat": "{{name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 43, "title": "Retries Rate",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 57},
+          "targets": [{"expr": "sum by (name) (rate(workqueue_retries_total{job=\"cattle-system-rancher\"}[5m]))", "legendFormat": "{{name}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "ops", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+
+        {"type": "row", "id": 105, "title": "Steve API", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 65}, "collapsed": false, "panels": []},
+        {
+          "type": "timeseries", "id": 50, "title": "Request Rate by Method",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 66},
+          "targets": [{"expr": "sum by (method) (rate(steve_api_total_requests{job=\"cattle-system-rancher\"}[5m]))", "legendFormat": "{{method}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "reqps", "custom": {"drawStyle": "line", "fillOpacity": 10, "stacking": {"mode": "normal"}}}}
+        },
+        {
+          "type": "timeseries", "id": 51, "title": "Request Latency p50 / p95 / p99",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 66},
+          "targets": [
+            {"expr": "histogram_quantile(0.50, sum by (le) (rate(steve_api_request_time_bucket{job=\"cattle-system-rancher\"}[5m])))", "legendFormat": "p50", "refId": "A"},
+            {"expr": "histogram_quantile(0.95, sum by (le) (rate(steve_api_request_time_bucket{job=\"cattle-system-rancher\"}[5m])))", "legendFormat": "p95", "refId": "B"},
+            {"expr": "histogram_quantile(0.99, sum by (le) (rate(steve_api_request_time_bucket{job=\"cattle-system-rancher\"}[5m])))", "legendFormat": "p99", "refId": "C"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "ms", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+
+        {"type": "row", "id": 106, "title": "Ingress (rancher hostname)", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 74}, "collapsed": false, "panels": []},
+        {
+          "type": "timeseries", "id": 60, "title": "Request Rate by Status",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 75},
+          "targets": [{"expr": "sum by (status) (rate(nginx_ingress_controller_requests{exported_namespace=\"cattle-system\"}[5m]))", "legendFormat": "{{status}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "reqps", "custom": {"drawStyle": "line", "fillOpacity": 10, "stacking": {"mode": "normal"}}}}
+        },
+        {
+          "type": "timeseries", "id": 61, "title": "Request Duration p50 / p95 / p99",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 75},
+          "targets": [
+            {"expr": "histogram_quantile(0.50, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"cattle-system\"}[5m])))", "legendFormat": "p50", "refId": "A"},
+            {"expr": "histogram_quantile(0.95, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"cattle-system\"}[5m])))", "legendFormat": "p95", "refId": "B"},
+            {"expr": "histogram_quantile(0.99, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"cattle-system\"}[5m])))", "legendFormat": "p99", "refId": "C"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 10}}}
+        },
+        {
+          "type": "timeseries", "id": 62, "title": "5xx Error Rate",
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 83},
+          "targets": [{"expr": "sum by (status) (rate(nginx_ingress_controller_requests{exported_namespace=\"cattle-system\", status=~\"5..\"}[5m]))", "legendFormat": "{{status}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "reqps", "custom": {"drawStyle": "bars", "fillOpacity": 80}, "color": {"mode": "fixed", "fixedColor": "red"}}}
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["rancher", "cattle-system"],
+      "templating": {
+        "list": [
+          {"name": "datasource", "type": "datasource", "query": "prometheus", "current": {}, "hide": 0, "label": "Datasource"}
+        ]
+      },
+      "time": {"from": "now-6h", "to": "now"},
+      "timepicker": {},
+      "timezone": "",
+      "title": "Rancher Server",
+      "uid": "rancher-server",
+      "version": 2,
+      "weekStart": ""
+    }

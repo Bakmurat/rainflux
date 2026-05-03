@@ -10,3 +10,4 @@ resources:
   - fluent.yaml
   - kyverno.yaml
   - policy-reporter.yaml
+  - keda.yaml

@@ -14,3 +14,4 @@ resources:
   - kyverno
   - policy-reporter
   - kyverno-sample
+  - keda
