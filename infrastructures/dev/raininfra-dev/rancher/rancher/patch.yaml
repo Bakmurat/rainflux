@@ -13,3 +13,6 @@ spec:
         source: secret
         secretName: bolunas-com-tls
     replicas: 1
+    extraEnv:
+      - name: CATTLE_PROMETHEUS_METRICS
+        value: "true"
