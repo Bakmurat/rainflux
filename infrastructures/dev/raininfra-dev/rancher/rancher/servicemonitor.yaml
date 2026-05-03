@@ -19,5 +19,10 @@ spec:
       scrapeTimeout: 20s
       scheme: https
       honorLabels: true
+      authorization:
+        type: Bearer
+        credentials:
+          name: rancher-prometheus-token
+          key: token
       tlsConfig:
         insecureSkipVerify: true

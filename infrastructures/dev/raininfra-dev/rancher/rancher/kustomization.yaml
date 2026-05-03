@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - ../../../../base/rancher
   - servicemonitor.yaml
+  - rbac.yaml
 patches:
   - path: patch.yaml
     target:
