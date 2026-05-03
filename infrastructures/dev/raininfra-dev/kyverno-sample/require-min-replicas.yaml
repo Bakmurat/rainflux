@@ -1,0 +1,28 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-min-replicas
+  annotations:
+    policies.kyverno.io/title: Require Minimum Replicas
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Deployments in the kyverno-demo namespace must have at least 2 replicas
+      to ensure high availability.
+spec:
+  background: true
+  rules:
+    - name: check-min-replicas
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - kyverno-demo
+      validate:
+        failureAction: Enforce
+        message: "Deployments must have at least 2 replicas."
+        pattern:
+          spec:
+            replicas: ">=2"

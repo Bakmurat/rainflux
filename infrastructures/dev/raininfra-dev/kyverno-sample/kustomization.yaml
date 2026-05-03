@@ -4,6 +4,8 @@ resources:
   - namespace.yaml
   # - policy.yaml
   # - pods.yaml
+  # - require-min-replicas.yaml
+  # - deployments.yaml
 
 labels:
   - pairs:
