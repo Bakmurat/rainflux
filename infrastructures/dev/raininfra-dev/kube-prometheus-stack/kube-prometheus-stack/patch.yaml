@@ -22,6 +22,20 @@ spec:
             hosts:
               - grafana-dev.bolunas.com
     prometheus:
+      ingress:
+        enabled: true
+        ingressClassName: nginx
+        annotations:
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        hosts:
+          - prometheus-dev.bolunas.com
+        paths:
+          - /
+        pathType: Prefix
+        tls:
+          - secretName: bolunas-com-tls
+            hosts:
+              - prometheus-dev.bolunas.com
       prometheusSpec:
         retention: 15d
         storageSpec:
