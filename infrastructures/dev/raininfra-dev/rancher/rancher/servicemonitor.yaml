@@ -13,9 +13,11 @@ spec:
     matchLabels:
       app: cattle-system-rancher
   endpoints:
-    - port: http
+    - port: https-internal
       path: /metrics
       interval: 30s
       scrapeTimeout: 20s
-      scheme: http
+      scheme: https
       honorLabels: true
+      tlsConfig:
+        insecureSkipVerify: true
